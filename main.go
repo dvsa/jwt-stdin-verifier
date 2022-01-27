@@ -7,13 +7,10 @@ import (
 	"io"
 	"io/ioutil"
 	"os"
-	"regexp"
 )
 
 var (
-	flagKey    = flag.String("key", "", "path to key file or '-' to read from stdin")
-	flagDebug  = flag.Bool("debug", false, "print out all kinds of debug data")
-	flagVerify = flag.String("verify", "", "path to JWT token to verify or '-' to read from stdin")
+	flagVerify = flag.String("verify", "", "JWT token to verify")
 )
 
 func main() {
@@ -29,25 +26,22 @@ func main() {
 	}
 }
 
-// Helper func:  Read input from specified file or stdin
-func loadData(p string) ([]byte, error) {
-	if p == "" {
+func loadKey() ([]byte, error) {
+	var keyFile = os.Getenv("JWT_VERIFY_KEY_FILE")
+
+	if keyFile == "" {
 		return nil, fmt.Errorf("no path specified")
 	}
 
 	var rdr io.Reader
-	if p == "-" {
-		rdr = os.Stdin
-	} else if p == "+" {
-		return []byte("{}"), nil
+
+	if f, err := os.Open(keyFile); err == nil {
+		rdr = f
+		defer f.Close()
 	} else {
-		if f, err := os.Open(p); err == nil {
-			rdr = f
-			defer f.Close()
-		} else {
-			return nil, err
-		}
+		return nil, err
 	}
+
 	return ioutil.ReadAll(rdr)
 }
 
@@ -55,31 +49,18 @@ func loadData(p string) ([]byte, error) {
 // of how to verify and view a token.
 func verifyToken() error {
 	// get the token
-	tokData, err := loadData(*flagVerify)
-	if err != nil {
-		return fmt.Errorf("couldn't read token: %w", err)
-	}
-
-	// trim possible whitespace from token
-	tokData = regexp.MustCompile(`\s*$`).ReplaceAll(tokData, []byte{})
-	if *flagDebug {
-		fmt.Fprintf(os.Stderr, "Token len: %v bytes\n", len(tokData))
+	if *flagVerify == "" {
+		return fmt.Errorf("Couldn't read token")
 	}
 
 	// Parse the token.  Load the key from command line option
-	token, err := jwt.Parse(string(tokData), func(t *jwt.Token) (interface{}, error) {
-		data, err := loadData(*flagKey)
+	token, err := jwt.Parse(string(*flagVerify), func(t *jwt.Token) (interface{}, error) {
+		data, err := loadKey()
 		if err != nil {
 			return nil, err
 		}
 		return jwt.ParseRSAPublicKeyFromPEM(data)
 	})
-
-	// Print some debug data
-	if *flagDebug && token != nil {
-		fmt.Fprintf(os.Stderr, "Header:\n%v\n", token.Header)
-		fmt.Fprintf(os.Stderr, "Claims:\n%v\n", token.Claims)
-	}
 
 	// Print an error if we can't parse for some reason
 	if err != nil {
@@ -92,7 +73,6 @@ func verifyToken() error {
 	} else {
 		return fmt.Errorf("token is valid")
 	}
-	git
-	in
+
 	return nil
 }
