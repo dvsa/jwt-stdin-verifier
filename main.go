@@ -21,8 +21,10 @@ func main() {
 	// Do the thing.  If something goes wrong, print error to stderr
 	// and exit with a non-zero status code
 	if err := verifyToken(); err != nil {
-		fmt.Fprintf(os.Stderr, "Error: %v\n", err)
+		fmt.Println("INVALID")
 		os.Exit(1)
+	} else {
+		fmt.Println("OK")
 	}
 }
 
@@ -30,7 +32,7 @@ func loadKey() ([]byte, error) {
 	var keyFile = os.Getenv("JWT_VERIFY_KEY_FILE")
 
 	if keyFile == "" {
-		return nil, fmt.Errorf("no path specified")
+		return nil, fmt.Errorf("")
 	}
 
 	var rdr io.Reader
@@ -50,7 +52,7 @@ func loadKey() ([]byte, error) {
 func verifyToken() error {
 	// get the token
 	if *flagVerify == "" {
-		return fmt.Errorf("Couldn't read token")
+		return fmt.Errorf("")
 	}
 
 	// Parse the token.  Load the key from command line option
@@ -64,14 +66,12 @@ func verifyToken() error {
 
 	// Print an error if we can't parse for some reason
 	if err != nil {
-		return fmt.Errorf("couldn't parse token: %w", err)
+		return fmt.Errorf("")
 	}
 
 	// Is token invalid?
 	if !token.Valid {
-		return fmt.Errorf("token is invalid")
-	} else {
-		return fmt.Errorf("token is valid")
+		return fmt.Errorf("")
 	}
 
 	return nil
