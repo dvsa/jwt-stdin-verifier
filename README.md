@@ -1,20 +1,20 @@
+```
        _          _                      _  __
       (_)_      _| |_    __   _____ _ __(_)/ _|_   _
       | \ \ /\ / / __|___\ \ / / _ \ '__| | |_| | | |
       | |\ V  V /| ||_____\ V /  __/ |  | |  _| |_| |
      _/ | \_/\_/  \__|     \_/ \___|_|  |_|_|  \__, |
     |__/                                       |___/
-
-Verify JWT's as part of an Apache Rewrite rule
-
-##What does it do
+    Verify JWT's as part of an Apache Rewrite rule
+```
+## What does it do
 
 This program will listen to stdin and treat any input as a JWT. The JWT will be verified and either `OK` printed or 
 `INVALID - {error}` for a valid or invalid token. It is designed to be used in conjuction with Apache Rewrite to allow 
 access based on a valid JWT within a query string
 
 
-##Usage
+## Usage
 
 Pretty simple: `./jwt-verify -keyfile <path/to/keyfile>`
 
