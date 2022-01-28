@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bufio"
 	"flag"
 	"fmt"
 	"github.com/golang-jwt/jwt/v4"
@@ -10,34 +11,31 @@ import (
 )
 
 var (
-	flagVerify = flag.String("verify", "", "JWT token to verify")
+	flagKeyFile = flag.String("keyfile", "", "path to key file")
 )
 
 func main() {
+	usage()
 
-	// Parse command line options
 	flag.Parse()
+	if *flagKeyFile == "" {
+		fmt.Fprintln(os.Stderr, "No keyfile provided. Please specify public key with -keyfile <path>")
+		return
+	}
 
-	// Do the thing.  If something goes wrong, print error to stderr
-	// and exit with a non-zero status code
-	if err := verifyToken(); err != nil {
-		fmt.Println("INVALID")
-		os.Exit(1)
-	} else {
-		fmt.Println("OK")
+	scanner := bufio.NewScanner(os.Stdin)
+	for scanner.Scan() {
+		if err := verifyToken(scanner.Text()); err != nil {
+			fmt.Fprintln(os.Stdout, "INVALID -", err)
+		} else {
+			fmt.Println("OK")
+		}
 	}
 }
 
 func loadKey() ([]byte, error) {
-	var keyFile = os.Getenv("JWT_VERIFY_KEY_FILE")
-
-	if keyFile == "" {
-		return nil, fmt.Errorf("")
-	}
-
 	var rdr io.Reader
-
-	if f, err := os.Open(keyFile); err == nil {
+	if f, err := os.Open(*flagKeyFile); err == nil {
 		rdr = f
 		defer f.Close()
 	} else {
@@ -47,16 +45,13 @@ func loadKey() ([]byte, error) {
 	return ioutil.ReadAll(rdr)
 }
 
-// Verify a token and output the claims.  This is a great example
-// of how to verify and view a token.
-func verifyToken() error {
-	// get the token
-	if *flagVerify == "" {
-		return fmt.Errorf("")
-	}
+func verifyToken(inputToken string) error {
 
-	// Parse the token.  Load the key from command line option
-	token, err := jwt.Parse(string(*flagVerify), func(t *jwt.Token) (interface{}, error) {
+	if inputToken == "" {
+		return fmt.Errorf("no JWT provided")
+	}
+	
+	_, err := jwt.Parse(inputToken, func(t *jwt.Token) (interface{}, error) {
 		data, err := loadKey()
 		if err != nil {
 			return nil, err
@@ -64,15 +59,23 @@ func verifyToken() error {
 		return jwt.ParseRSAPublicKeyFromPEM(data)
 	})
 
-	// Print an error if we can't parse for some reason
 	if err != nil {
-		return fmt.Errorf("")
-	}
-
-	// Is token invalid?
-	if !token.Valid {
-		return fmt.Errorf("")
+		return fmt.Errorf(err.Error())
 	}
 
 	return nil
+}
+
+func usage() {
+	flag.Usage = func() {
+		fmt.Println("    _          _                      _  __       ")
+		fmt.Println("   (_)_      _| |_    __   _____ _ __(_)/ _|_   _ ")
+		fmt.Println("   | \\ \\ /\\ / / __|___\\ \\ / / _ \\ '__| | |_| | | |")
+		fmt.Println("   | |\\ V  V /| ||_____\\ V /  __/ |  | |  _| |_| |")
+		fmt.Println("  _/ | \\_/\\_/  \\__|     \\_/ \\___|_|  |_|_|  \\__, |")
+		fmt.Println(" |__/                                       |___/ ")
+		fmt.Println("Watch stdin and verify JWT it receives")
+		fmt.Println("Usage of jwt-verify:")
+		flag.PrintDefaults()
+	}
 }
