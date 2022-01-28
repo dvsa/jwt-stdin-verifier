@@ -19,15 +19,15 @@ compile: compile-darwin compile-linux
 compile-darwin: compile-darwin-amd compile-darwin-arm
 
 compile-darwin-amd:
-	GOOS=darwin GOARCH=amd64 go build -o $(binaryLocation)/$(binaryName)-darwin-amd
+	GOOS=darwin GOARCH=amd64 go build -ldflags "-s -w" -o $(binaryLocation)/$(binaryName)-darwin-amd
 
 compile-darwin-arm:
-	GOOS=darwin GOARCH=arm64 go build -o $(binaryLocation)/$(binaryName)-darwin-arm
+	GOOS=darwin GOARCH=arm64 go build -ldflags "-s -w" -o $(binaryLocation)/$(binaryName)-darwin-arm
 
 compile-linux: compile-linux-386 compile-linux-64
 
 compile-linux-64:
-	GOOS=linux GOARCH=amd64 go build -o $(binaryLocation)/$(binaryName)-linux-amd64
+	GOOS=linux GOARCH=amd64 go build -ldflags "-s -w" -o $(binaryLocation)/$(binaryName)-linux-amd64
 
 compile-linux-386:
-	GOOS=linux GOARCH=386 go build -o $(binaryLocation)/$(binaryName)-linux-386
+	GOOS=linux GOARCH=386 go build -ldflags "-s -w" -o $(binaryLocation)/$(binaryName)-linux-386
