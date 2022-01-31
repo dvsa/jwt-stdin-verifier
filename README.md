@@ -27,6 +27,15 @@ Pretty simple: `./jwt-verify -keyfile <path/to/keyfile>`
 We make the assumption that the JWT to verify has been signed using an RS256 algorithm. Because of this you will need to
 provide the public key in a PEM file format.
 
+### Generating a key
+
+The following commands can be used to create the required private and public key with the names `jwtRS256.key` & `jwtRS256.pub`
+
+```
+ssh-keygen -t rsa -P "" -b 4096 -m PEM -f jwtRS256.key
+ssh-keygen -e -m PEM -f jwtRS256.key > jwtRS256.key.pub
+```
+
 
 ## Apache integration
 
