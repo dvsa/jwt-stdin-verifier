@@ -7,12 +7,16 @@ import (
 	"github.com/golang-jwt/jwt/v4"
 	"io"
 	"io/ioutil"
+	"net/url"
 	"os"
+	"strings"
 )
 
 var (
 	flagKeyFile = flag.String("keyfile", "", "path to key file")
 )
+
+var requestPath string
 
 func main() {
 	usage()
@@ -25,7 +29,20 @@ func main() {
 
 	scanner := bufio.NewScanner(os.Stdin)
 	for scanner.Scan() {
-		if err := verifyToken(scanner.Text()); err != nil {
+		stdinArgs := strings.Fields(scanner.Text())
+		var checkPath = false
+		if len(stdinArgs) == 1 {
+			checkPath = false
+		} else if len(stdinArgs) == 2 {
+			checkPath = true
+			decodedPath, _ := url.QueryUnescape(stdinArgs[1])
+			requestPath = decodedPath
+		} else {
+			fmt.Fprintln(os.Stdout, "INVALID NUMBER OF STDIN ARGS SUPPLIED")
+			continue
+		}
+
+		if err := verifyToken(stdinArgs[0], checkPath); err != nil {
 			fmt.Fprintln(os.Stdout, "INVALID -", err)
 		} else {
 			fmt.Println("OK")
@@ -45,13 +62,26 @@ func loadKey() ([]byte, error) {
 	return ioutil.ReadAll(rdr)
 }
 
-func verifyToken(inputToken string) error {
+func verifyToken(inputToken string, checkDocPath bool) error {
 
 	if inputToken == "" {
 		return fmt.Errorf("no JWT provided")
 	}
-	
-	_, err := jwt.Parse(inputToken, func(t *jwt.Token) (interface{}, error) {
+
+	type PathClaims struct {
+		PathClaimKey string `json:"doc"`
+		jwt.RegisteredClaims
+	}
+
+	_, err := jwt.ParseWithClaims(inputToken, &PathClaims{}, func(t *jwt.Token) (interface{}, error) {
+
+		if checkDocPath {
+			claims := t.Claims.(*PathClaims)
+			if claims.PathClaimKey != requestPath {
+				return nil, fmt.Errorf("claim does not match urldecoded path")
+			}
+		}
+
 		data, err := loadKey()
 		if err != nil {
 			return nil, err
