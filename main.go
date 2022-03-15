@@ -7,7 +7,6 @@ import (
 	"github.com/golang-jwt/jwt/v4"
 	"io"
 	"io/ioutil"
-	"net/url"
 	"os"
 	"strings"
 )
@@ -29,14 +28,13 @@ func main() {
 
 	scanner := bufio.NewScanner(os.Stdin)
 	for scanner.Scan() {
-		stdinArgs := strings.Fields(scanner.Text())
+		stdinArgs := strings.Split(scanner.Text(), "||")
 		var checkPath = false
 		if len(stdinArgs) == 1 {
 			checkPath = false
 		} else if len(stdinArgs) == 2 {
 			checkPath = true
-			decodedPath, _ := url.QueryUnescape(stdinArgs[1])
-			requestPath = decodedPath
+			requestPath = stdinArgs[1]
 		} else {
 			fmt.Fprintln(os.Stdout, "INVALID NUMBER OF STDIN ARGS SUPPLIED")
 			continue
@@ -77,7 +75,7 @@ func verifyToken(inputToken string, checkDocPath bool) error {
 
 		if checkDocPath {
 			claims := t.Claims.(*PathClaims)
-			if claims.PathClaimKey != requestPath {
+			if !strings.HasSuffix(requestPath, claims.PathClaimKey) {
 				return nil, fmt.Errorf("claim does not match urldecoded path")
 			}
 		}
