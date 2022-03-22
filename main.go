@@ -36,7 +36,7 @@ func main() {
 			checkPath = true
 			requestPath = stdinArgs[1]
 		} else {
-			fmt.Fprintln(os.Stdout, "INVALID NUMBER OF STDIN ARGS SUPPLIED")
+			fmt.Fprint(os.Stderr, "INVALID NUMBER OF STDIN ARGS SUPPLIED")
 			continue
 		}
 
